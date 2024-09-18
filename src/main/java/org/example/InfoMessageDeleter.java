@@ -7,6 +7,7 @@ public class InfoMessageDeleter {
         String user = "sa";
         String password = "admin";
         String selectQuery = "SELECT id, message FROM messages WHERE type = 'INFO' AND processed = false";
+        String deleteQuery = "DELETE FROM messages WHERE id = ?";
 
         try (Connection conn = DriverManager.getConnection(url, user, password);
              Statement stmt = conn.createStatement();
@@ -16,10 +17,10 @@ public class InfoMessageDeleter {
                 int id = rs.getInt("id");
                 String message = rs.getString("message");
                 System.out.println("Processing INFO message: " + message);
-                // создаем новый Statement для выполнения запроса на удаление
-                try (Statement deleteStmt = conn.createStatement()) {
-                    String deleteQuery = "DELETE FROM messages WHERE id = " + id; //запрос на удаление
-                    deleteStmt.executeUpdate(deleteQuery); // выполнение запроса
+
+                try (PreparedStatement pstmt = conn.prepareStatement(deleteQuery)) {
+                    pstmt.setInt(1, id);
+                    pstmt.executeUpdate();
                 }
             }
         } catch (Exception e) {

@@ -1,7 +1,7 @@
 package org.example;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.Statement;
+import java.sql.PreparedStatement;
 import java.time.LocalDateTime;
 import java.util.Random;
 
@@ -12,6 +12,9 @@ public class DbWriter {
         String user = "sa";
         String password = "admin";
 
+        // sql для вставки данных
+        String sql = "INSERT INTO messages (message, type, processed) VALUES (?, ?, ?)";
+
         try (Connection conn = DriverManager.getConnection(url, user, password)) {
             while (true) {
                 boolean isInfoType = new Random().nextBoolean();
@@ -19,14 +22,14 @@ public class DbWriter {
                 String type = isInfoType ? "INFO" : "WARN";
                 boolean processed = false; // изначально false, помечается как необработанная
 
-                // создание запроса
-                String sql = String.format("INSERT INTO messages (message, type, processed) VALUES ('%s', '%s', %b)",
-                        message,
-                        type,
-                        processed);
-                // объект Statement используется для выполнения sqlзапросов
-                try (Statement stmt = conn.createStatement()) {
-                    stmt.executeUpdate(sql);
+                // PreparedStatement помогает предотвратить sql-инъекции
+                // и упрощает задачу вставки параметров в запрос.
+                try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                    stmt.setString(1, message);
+                    stmt.setString(2, type);
+                    stmt.setBoolean(3, processed);
+
+                    stmt.executeUpdate();
                 }
                 Thread.sleep(1000);
             }
@@ -34,5 +37,4 @@ public class DbWriter {
             System.err.println("Error: " + e.getMessage());
         }
     }
-
 }

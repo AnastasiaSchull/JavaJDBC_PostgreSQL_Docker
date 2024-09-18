@@ -7,6 +7,7 @@ public class WarnMessageUpdater {
         String user = "sa";
         String password = "admin";
         String selectQuery = "SELECT id, message FROM messages WHERE type = 'WARN' AND processed = false";
+        String updateQuery = "UPDATE messages SET processed = true WHERE id = ?";
 
         try (Connection conn = DriverManager.getConnection(url, user, password);
              Statement stmt = conn.createStatement();
@@ -16,10 +17,10 @@ public class WarnMessageUpdater {
                 int id = rs.getInt("id");
                 String message = rs.getString("message");
                 System.out.println("Processing WARN message: " + message);
-                //новый Statement для запроса на обновление
-                try (Statement updateStmt = conn.createStatement()) {
-                    String updateQuery = "UPDATE messages SET processed = true WHERE id = " + id;
-                    updateStmt.executeUpdate(updateQuery);
+
+                try (PreparedStatement pstmt = conn.prepareStatement(updateQuery)) {
+                    pstmt.setInt(1, id);
+                    pstmt.executeUpdate();
                 }
             }
         } catch (Exception e) {
